@@ -8,49 +8,36 @@ namespace Plugin {
 
     const string RemoteHostExample::Initialize(PluginHost::IShell* service) 
     {
-        string errorMessage = "";
-
-        service->AddRef();
-        _shell = service;
+        string result;
 
         Config config;
         config.FromString(service->ConfigLine());
 
         string name = config.Name.Value();
-        uint32_t connectionId = 0;   
 
-        _implementation = service->Root<Exchange::IRemoteHostExample>(connectionId, Core::infinite, "RemoteHostExampleImpl", ~0);
+        // If SlaveAddress will not be set, plugin will be started localy
+        // otherwise, plugin started on slave machine will be used
+        string remoteTarget = config.SlaveAddress.Value();
+        uint32_t connectionId;
 
-        if (_implementation != nullptr) {
+        _implementation = service->Root<Exchange::IRemoteHostExample>(connectionId, Core::infinite, "RemoteHostExampleImpl", ~0, remoteTarget);
 
-            if (service->RemoteConnection(connectionId)->ConnectionType() == RPC::IRemoteConnection::Type::Local) {
+        if (remoteTarget.empty() == false) {
+            string response;
+            _implementation->Greet(name, response);
 
-                // code run only on plugin host
-                _implementation->Initialize(service);
-            } else {
-                // code run only on proxy side
-                if (_implementation->SubscribeTimeUpdates(this) != Core::ERROR_NONE) {
-                    errorMessage = "Failed to subscribe updates";
-                }
-            }
-            
+            printf("## RESPONSE: %s\n", response.c_str());
         } else {
-            errorMessage = "Failed to initialize RemoteHostExample implementaiton";
+            _implementation->SetName(name);
         }
 
-        return errorMessage;
+        return result;
     }
 
     void RemoteHostExample::Deinitialize(PluginHost::IShell* service) 
     {
         if (_implementation != nullptr) {
-            _implementation->UnsubscribeTimeUpdates(this);
-
-            // Close remote connection
-            _implementation->QueryInterface<RPC::RemoteLinker>()->Unlink();
-
-            uint32_t result = _implementation->Release();
-
+            _implementation->Release();
             _implementation = nullptr;
         }
     }
@@ -58,13 +45,6 @@ namespace Plugin {
     string RemoteHostExample::Information() const 
     {
         return (string());
-    }
-
-    uint32_t RemoteHostExample::TimeUpdate(string time) 
-    {
-        TRACE_L1("#### Current time is: %s ####", time.c_str());
-
-        return Core::ERROR_NONE;
     }
 }
 }

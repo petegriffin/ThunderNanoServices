@@ -27,7 +27,7 @@ namespace Plugin {
         if (connection == nullptr) {
             pathName += '0';
         } else {
-            pathName += Core::NumberType<uint32_t>(connection->Id()).Text();
+            pathName += Core::NumberType<uint32_t>(connection->Parent()).Text() + '.' + Core::NumberType<uint32_t>(connection->ProcessId()).Text();
         }
 
         return (pathName);

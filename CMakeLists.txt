@@ -30,16 +30,12 @@ option(PLUGIN_OPENCDMI "Include OpenCDMi plugin" OFF)
 option(PLUGIN_PACKAGER "Include Packager plugin" OFF)
 option(PLUGIN_POWER "Include Power plugin" OFF)
 option(PLUGIN_REMOTECONTROL "Include RemoteControl plugin" OFF)
-<<<<<<< HEAD
 option(PLUGIN_RTSPCLIENT "Include RtspClient plugin" OFF)
-=======
-<<<<<<< HEAD
->>>>>>> 97d4eb1... [RemoteInvocation] First working version of RemoteInvocation
 option(PLUGIN_SECURESHELLSERVER "Include SecureShellServer plugin" OFF)
 option(PLUGIN_SECURITYAGENT "Include SecurityAgent plugin" OFF)
-=======
+option(PLUGIN_REMOTECONTROL "Include RemoteControl plugin" ON)
+option(PLUGIN_REMOTEHOSTEXAMPLE "Include RemoteHostExample plugin" ON)
 option(PLUGIN_REMOTEINVOCATION "Include RemoteInvocation plugin" ON)
->>>>>>> WIP
 option(PLUGIN_STREAMER "Include Streamer plugin" OFF)
 option(PLUGIN_SNAPSHOT "Include Snapshot plugin" OFF)
 option(PLUGIN_SPARK "Include SparkEngine plugin" OFF)
@@ -174,6 +170,10 @@ endif()
 
 if(PLUGIN_REMOTECONTROL)
     add_subdirectory(RemoteControl)
+endif()
+
+if(PLUGIN_REMOTEHOSTEXAMPLE)
+    add_subdirectory(examples/RemoteHostExample)
 endif()
 
 if(PLUGIN_REMOTEINVOCATION)

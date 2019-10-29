@@ -2,12 +2,12 @@
 
 #include "Module.h"
 #include "interfaces/IRemoteHostExample.h"
-#include <interfaces/json/JsonData_RemoteHostExample.h>
+#include "interfaces/IRemoteLinker.h"
 
 namespace WPEFramework {
 namespace Plugin {
 
-    class RemoteHostExample : public PluginHost::IPlugin, public PluginHost::JSONRPC, public Exchange::IRemoteHostExample::ITimeListener {
+    class RemoteHostExample : public PluginHost::IPlugin {
     public:
         class Config : public Core::JSON::Container {
         private:
@@ -17,8 +17,10 @@ namespace Plugin {
         public:
             Config()
                 : Core::JSON::Container()
+                , SlaveAddress()
                 , Name()
             {
+                Add(_T("slaveAddress"), &SlaveAddress);
                 Add(_T("name"), &Name);
             }
 
@@ -27,6 +29,7 @@ namespace Plugin {
             }
 
         public:
+            Core::JSON::String SlaveAddress;
             Core::JSON::String Name;
         };
 
@@ -34,27 +37,17 @@ namespace Plugin {
         RemoteHostExample& operator=(const RemoteHostExample&) = delete;
 
         RemoteHostExample()
-            : _shell(nullptr)
         {
-            RegisterAll();
         }
 
         virtual ~RemoteHostExample()
         {
-            if (_shell) {
-                _shell->Release();
-                _shell = nullptr;
-            }
-
-            UnregisterAll();
         }
 
         BEGIN_INTERFACE_MAP(RemoteHostExample)
-            INTERFACE_ENTRY(PluginHost::IPlugin)
-            INTERFACE_ENTRY(Exchange::IRemoteHostExample::ITimeListener)
-            INTERFACE_ENTRY(PluginHost::JSONRPC)
             INTERFACE_AGGREGATE(Exchange::IRemoteHostExample, _implementation)
-            INTERFACE_AGGREGATE(RPC::IRemoteLinker, _implementation)
+            INTERFACE_AGGREGATE(Exchange::IRemoteLinker, _implementation)
+            INTERFACE_ENTRY(PluginHost::IPlugin)
         END_INTERFACE_MAP
 
     public:
@@ -64,19 +57,8 @@ namespace Plugin {
         virtual void Deinitialize(PluginHost::IShell* service) override;
         virtual string Information() const override;
 
-        //   IRemoteHostExample::ITimeListener methods
-        // -------------------------------------------------------------------------------------------------------
-        uint32_t TimeUpdate(string time) override;
-    private:
-        //   JSONRPC methods
-        // -------------------------------------------------------------------------------------------------------
-        void RegisterAll();
-        void UnregisterAll();
-        uint32_t endpoint_greet(const JsonData::RemoteHostExample::GreetParamsData& params, JsonData::RemoteHostExample::GreetResultData& response);
-
     private:
         Exchange::IRemoteHostExample* _implementation;
-        PluginHost::IShell* _shell;
     };
 
 } // namespace Plugin

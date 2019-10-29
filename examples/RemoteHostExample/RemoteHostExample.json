@@ -1,17 +1,10 @@
 {
-    "$schema": "plugin.schema.json",
-    "info": {
-      "title": "RemoteHostExample plugin",
-      "callsign": "RemoteHostExample",
-      "locator": "libWPEFrameworkRemoteHostExample.so",
-      "status": "production",
-      "description": [
-        "Example of remote invocation functionality."
-      ],
-      "version": "1.0"
-    },
-    "interface": {
-      "$ref": "{interfacedir}/RemoteHostExample.json#"
-    }
+ "locator":"libWPEFrameworkRemoteHostExample.so",
+ "classname":"RemoteHostExample",
+ "autostart":false,
+ "configuration":{
+  "root":{
+   "outofprocess":true
   }
-  
+ }
+}
