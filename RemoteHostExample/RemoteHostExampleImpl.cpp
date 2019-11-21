@@ -1,6 +1,7 @@
 #include "Module.h"
 #include "interfaces/IRemoteHostExample.h"
 #include "interfaces/IRemoteLinker.h"
+#include "RemoteHostExample.h"
 
 namespace WPEFramework {
 namespace Exchange {
@@ -43,6 +44,8 @@ namespace Exchange {
             }
 
             ASSERT(_remoteServer.IsValid() == false);
+
+            return Core::ERROR_NONE;
         }
 
     private:
@@ -51,7 +54,7 @@ namespace Exchange {
 
 
     class RemoteHostExampleImpl : public RemoteLinker, IRemoteHostExample {
-    public:
+    public: 
         RemoteHostExampleImpl() 
             : _name()
         {
@@ -63,7 +66,7 @@ namespace Exchange {
 
         }
 
-        uint32_t SetName(const string& name) override;
+        uint32_t Initialize(PluginHost::IShell* service) override;
         uint32_t Greet(const string& name, string& greeting) override;
 
         BEGIN_INTERFACE_MAP(RemoteHostExampleImpl)
@@ -75,11 +78,25 @@ namespace Exchange {
         string _name;
     };
 
-    uint32_t RemoteHostExampleImpl::SetName(const string& name) {
-        _name = name;
+    uint32_t RemoteHostExampleImpl::Initialize(PluginHost::IShell* service) {
+        Plugin::RemoteHostExample::Config config;
+        config.FromString(service->ConfigLine());
+        
+        _name = config.Name.Value();
+        service->DataPath();
+        service->DataPath();
+        service->DataPath();
+        service->DataPath();
+        service->DataPath();
+        service->DataPath();
+        service->DataPath();
+        service->DataPath();
+        service->DataPath();
+        
 
         return Core::ERROR_NONE;
     }
+
 
     uint32_t RemoteHostExampleImpl::Greet(const string& name, string& response) {
         response = "Hello " + name + ", my name is " + _name;
