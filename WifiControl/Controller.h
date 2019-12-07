@@ -295,6 +295,7 @@ namespace WPASupplicant {
                 : Request()
                 , _scanning(false)
                 , _parent(parent)
+                , _eventReporting(~0)
             {
             }
             virtual ~ScanRequest()
@@ -341,7 +342,21 @@ namespace WPASupplicant {
                     }
                 }
                 _scanning = false;
+
+                if (_eventReporting != static_cast<uint32_t>(~0)) {
+                    _parent.Notify(static_cast<events>(_eventReporting));
+                    _eventReporting = static_cast<uint32_t>(~0);
+                }
+
+                //_signaled.SetEvent();
+
+
             }
+            inline void Event(const events value)
+            {
+                _eventReporting = value;
+            }
+
 
         private:
             uint64_t Transform(const Core::TextFragment& infoLine, NetworkInfo& source)
@@ -378,6 +393,7 @@ namespace WPASupplicant {
         private:
             bool _scanning;
             Controller& _parent;
+            uint32_t _eventReporting;
         };
         class StatusRequest : public Request {
         private:
@@ -829,15 +845,14 @@ namespace WPASupplicant {
         }
         inline uint32_t Scan()
         {
-
             uint32_t result = Core::ERROR_INPROGRESS;
+
             _adminLock.Lock();
             const bool activated = _scanRequest.Activated();
             _adminLock.Unlock();
 
             if (activated == true) {
                 result = Core::ERROR_NONE;
-
                 CustomRequest exchange(string(_TXT("SCAN")));
 
                 Submit(&exchange);
@@ -1630,7 +1645,7 @@ namespace WPASupplicant {
 
         virtual void StateChange()
         {
-            TRACE_L1("StateChange: %s\n", IsOpen() ? _T("true") : _T("false"));
+            TRACE_L1("StateChange: %s", IsOpen() ? _T("true") : _T("false"));
         }
 
         void Abort()
@@ -1649,7 +1664,6 @@ namespace WPASupplicant {
 
         void Submit(Request* data) const
         {
-
             _adminLock.Lock();
 
             ASSERT(std::find(_requests.begin(), _requests.end(), data) == _requests.end());

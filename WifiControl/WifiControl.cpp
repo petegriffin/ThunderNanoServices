@@ -403,10 +403,8 @@ namespace Plugin
 
     uint64_t WifiControl::Timed(const uint64_t scheduledTime)
     {
-        if (!_controller->IsScanning()) {
-            uint32_t rc = _controller->Scan();
-            TRACE(Trace::Information, ("%s: Scan returned %d", __FUNCTION__, rc));
-        }
+        uint32_t rc = _controller->Scan();
+        TRACE(Trace::Information, ("%s: Scan returned %d", __FUNCTION__, rc));
         ScheduleScan();
         return 0;
     }

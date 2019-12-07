@@ -206,16 +206,16 @@ namespace WPASupplicant {
                     } else {
                         _adminLock.Unlock();
                     }
-                } else if ((event.Value() == CTRL_EVENT_SCAN_RESULTS)) {
+                } else if ((event == CTRL_EVENT_SCAN_RESULTS)) {
                     _adminLock.Lock();
                     if (_scanRequest.Set() == true) {
+                        _scanRequest.Event(event.Value());
                         _adminLock.Unlock();
                         Submit(&_scanRequest);
                     } else {
                         _adminLock.Unlock();
                     }
                 } else if ((event == CTRL_EVENT_BSS_ADDED) || (event == CTRL_EVENT_BSS_REMOVED)) {
-
                     ASSERT(position != string::npos);
 
                     Core::TextFragment infoLine(message, position, message.length() - position);
