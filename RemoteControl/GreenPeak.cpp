@@ -201,7 +201,6 @@ namespace Plugin {
         }
         virtual ~GreenPeak()
         {
-            Remotes::RemoteAdministrator::Instance().Revoke(*this);
         }
 
     public:
