@@ -157,6 +157,7 @@ namespace WPASupplicant {
     /* virtual */ uint16_t Controller::SendData(uint8_t* dataFrame, const uint16_t maxSendSize)
     {
         uint16_t result = 0;
+
         _adminLock.Lock();
         if ((_requests.size() > 0) && (_requests.front()->Message().empty() == false)) {
             string& data = _requests.front()->Message();
@@ -166,6 +167,7 @@ namespace WPASupplicant {
             data = data.substr(result);
         }
         _adminLock.Unlock();
+
         return (result);
     }
     /* virtual */ uint16_t Controller::ReceiveData(uint8_t* dataFrame, const uint16_t receivedSize)
@@ -237,7 +239,9 @@ namespace WPASupplicant {
                     // Let see what we need to do with this BSSID, add or remove :-)
                     if ((event == CTRL_EVENT_BSS_ADDED) && (_detailRequest.Set(bssid) == true)) {
                         // send out a request for detail.
+                        _adminLock.Unlock();
                         Submit(&_detailRequest);
+                        _adminLock.Lock();
                     }
                     // else if (event == CTRL_EVENT_BSS_REMOVED) {
                     //
@@ -351,7 +355,7 @@ namespace WPASupplicant {
     }
     void Controller::Reevaluate()
     {
-
+        _adminLock.Lock();
         NetworkInfoContainer::iterator index(_networks.begin());
 
         while ((index != _networks.end()) && (index->second.HasDetail() == true)) {
@@ -359,17 +363,24 @@ namespace WPASupplicant {
         }
         if (index != _networks.end()) {
             if (_detailRequest.Set(index->first) == true) {
+                _adminLock.Unlock();
                 // send out a request for detail.
                 Submit(&_detailRequest);
+            } else {
+                _adminLock.Unlock();
             }
         } else if (_enabled.size() == 0) {
             // send out a request for the network list
             if (_networkRequest.Set() == true) {
                 // send out a request for detail.
+                _adminLock.Unlock();
                 Submit(&_networkRequest);
+            } else {
+                _adminLock.Unlock();
             }
         } else {
             _callback->Dispatch(CTRL_EVENT_NETWORK_CHANGED);
+            _adminLock.Unlock();
         }
     }
 }
