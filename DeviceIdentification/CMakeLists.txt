@@ -18,7 +18,7 @@ if(NEXUS_FOUND)
             NXCLIENT::NXCLIENT)
     target_sources(${MODULE_NAME} 
         PRIVATE 
-            Implementation/Nexus/Nexus.cpp)
+            Implementation/Nexus.cpp)
 endif()
 
 set_target_properties(${MODULE_NAME} PROPERTIES

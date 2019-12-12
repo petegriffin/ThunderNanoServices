@@ -1,5 +1,6 @@
 #include "DeviceIdentification.h"
 #include "IdentityProvider.h"
+#include "DeviceInfoProvider.h"
 
 namespace WPEFramework {
 namespace Plugin {
@@ -42,6 +43,16 @@ namespace Plugin {
 
         return (result);
     }
+
+    /* virtual */ const std::string DeviceIdentification::FirmwareVersion() const 
+    {
+        return GetFirmwareVersion();
+    };
+
+    /* virtual */ const std::string DeviceIdentification::Chipset() const 
+    {
+        return GetChipset();
+    };
 
 } // namespace Plugin
 } // namespace WPEFramework

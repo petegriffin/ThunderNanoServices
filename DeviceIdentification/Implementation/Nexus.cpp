@@ -1,6 +1,8 @@
 #include "../IdentityProvider.h"
+#include "../Module.h"
 
 #include <nexus_config.h>
+#include <nexus_platform.h>
 #include <nxclient.h>
 
 #if NEXUS_SECURITY_API_VERSION == 2
@@ -98,6 +100,62 @@ private:
 } _identifier;
 
 #endif
+
+static class NexusDeviceInfo {
+public:
+    NexusDeviceInfo(const NexusDeviceInfo&) = delete;
+    NexusDeviceInfo& operator= (const NexusDeviceInfo&) = delete;
+
+    NexusDeviceInfo()
+    : _firmware()
+    , _chipset()
+    {}
+
+    ~NexusDeviceInfo() {}
+
+    const std::string FirmwareVersion()
+    {
+        if(_firmware.empty()){
+            _firmware = "Nexus " + std::to_string(NEXUS_PLATFORM_VERSION_MAJOR) + "." + std::to_string(NEXUS_PLATFORM_VERSION_MINOR);
+        }
+        
+        return _firmware;
+    };
+
+    const std::string Chipset()
+    {
+        if(_chipset.empty()){
+            NxClient_Join(nullptr);
+
+            NEXUS_PlatformStatus info;
+            NEXUS_Platform_GetStatus(&info);
+
+            // Get chipset name
+            char chipsetName[62];
+            ::snprintf(chipsetName, sizeof(chipsetName), "%x%c%d", info.chipId, 'A' + ((info.chipRevision >> 8) & 0xf)
+                    , (info.chipRevision & 0xf));
+            _chipset = chipsetName;
+   
+            NxClient_Uninit();
+        }
+        return _chipset;
+    };
+    
+private:
+    std::string _chipset;
+    std::string _firmware;
+
+} _nexusDeviceInfo;
+
+const char* GetFirmwareVersion()
+{
+    return (_nexusDeviceInfo.FirmwareVersion().c_str());
+}
+
+const char* GetChipset()
+{
+    return (_nexusDeviceInfo.Chipset().c_str());
+}
 
 const unsigned char* GetIdentity(unsigned char* length)
 {
