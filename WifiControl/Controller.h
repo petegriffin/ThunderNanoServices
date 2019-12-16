@@ -1087,13 +1087,13 @@ namespace WPASupplicant {
                 uint32_t id = ~0;
 
                 _enabled[SSID] = ConfigInfo(~0, false);
+                _adminLock.Unlock();
 
                 // We have bo entry for this SSID, lets create one.
                 CustomRequest exchange(string(_TXT("ADD_NETWORK")));
 
                 Submit(&exchange);
 
-                _adminLock.Unlock();
 
                 if ((exchange.Wait(MaxConnectionTime) == true) && (exchange.Response() != _T("FAIL"))) {
 
@@ -1128,13 +1128,11 @@ namespace WPASupplicant {
                 //Config internally calls Lock so unlocking here to avoid dead lock
                 _adminLock.Unlock();
                 result = Config(Core::ProxyType<Controller>(*this), SSID);
-                _adminLock.Lock();
+
                 // We have bo entry for this SSID, lets create one.
                 CustomRequest exchange(string(_TXT("REMOVE_NETWORK ")) + Core::NumberType<uint32_t>(entry->second.Id()).Text());
 
                 Submit(&exchange);
-
-                _adminLock.Unlock();
 
                 if ((exchange.Wait(MaxConnectionTime) == true) && (exchange.Response() != _T("FAIL"))) {
 
@@ -1219,12 +1217,11 @@ namespace WPASupplicant {
             EnabledContainer::iterator index(_enabled.find(SSID));
 
             if (index != _enabled.end()) {
+                _adminLock.Unlock();
                 result = Core::ERROR_NONE;
                 CustomRequest exchange(string(_TXT("SELECT_NETWORK ")) + Core::NumberType<uint32_t>(index->second.Id()).Text());
 
                 Submit(&exchange);
-
-                _adminLock.Unlock();
 
                 if ((exchange.Wait(MaxConnectionTime) == false) || (exchange.Response() != _T("OK"))) {
 
@@ -1270,12 +1267,12 @@ namespace WPASupplicant {
             EnabledContainer::iterator index(_enabled.find(SSID));
 
             if ((index != _enabled.end()) && (index->second.IsEnabled() == true)) {
+                _adminLock.Unlock();
+
                 result = Core::ERROR_NONE;
                 CustomRequest exchange(string(_TXT("DISCONNECT")));
 
                 Submit(&exchange);
-
-                _adminLock.Unlock();
 
                 if ((exchange.Wait(MaxConnectionTime) == false) || (exchange.Response() != _T("OK"))) {
 
@@ -1424,14 +1421,13 @@ namespace WPASupplicant {
             EnabledContainer::iterator index(_enabled.find(SSID));
 
             if ((index != _enabled.end()) && (index->second.Id() > 0)) {
+                _adminLock.Unlock();
 
                 result = Core::ERROR_NONE;
 
                 CustomRequest exchange(string(_TXT("ENABLE_NETWORK ")) + Core::NumberType<uint32_t>(index->second.Id()).Text());
 
                 Submit(&exchange);
-
-                _adminLock.Unlock();
 
                 if ((exchange.Wait(MaxConnectionTime) == false) || (exchange.Response() != _T("OK"))) {
 
@@ -1458,14 +1454,13 @@ namespace WPASupplicant {
             EnabledContainer::iterator index(_enabled.find(SSID));
 
             if ((index != _enabled.end()) && (index->second.Id() > 0)) {
+                _adminLock.Unlock();
 
                 result = Core::ERROR_NONE;
 
                 CustomRequest exchange(string(_TXT("DISABLE_NETWORK ")) + Core::NumberType<uint32_t>(index->second.Id()).Text());
 
                 Submit(&exchange);
-
-                _adminLock.Unlock();
 
                 if ((exchange.Wait(MaxConnectionTime) == false) || (exchange.Response() != _T("OK"))) {
 
@@ -1487,13 +1482,9 @@ namespace WPASupplicant {
         {
             uint32_t result = Core::ERROR_NONE;
 
-            _adminLock.Lock();
-
             CustomRequest exchange(string(_TXT("SET ")) + key + ' ' + value);
 
             Submit(&exchange);
-
-            _adminLock.Unlock();
 
             if ((exchange.Wait(MaxConnectionTime) == false) || (exchange.Response() != _T("OK"))) {
 
@@ -1508,13 +1499,9 @@ namespace WPASupplicant {
         {
             uint32_t result;
 
-            _adminLock.Lock();
-
             CustomRequest exchange(string(_TXT("GET ")) + key);
 
             Submit(&exchange);
-
-            _adminLock.Unlock();
 
             if ((exchange.Wait(MaxConnectionTime) == false) || (exchange.Response() != _T("OK"))) {
 
@@ -1538,14 +1525,13 @@ namespace WPASupplicant {
             EnabledContainer::iterator index(_enabled.find(SSID));
 
             if (index != _enabled.end()) {
+                _adminLock.Unlock();
 
                 result = Core::ERROR_NONE;
 
                 CustomRequest exchange(string(_TXT("SET_NETWORK ")) + Core::NumberType<uint32_t>(index->second.Id()).Text() + ' ' + key + ' ' + value);
 
                 Submit(&exchange);
-
-                _adminLock.Unlock();
 
                 if ((exchange.Wait(MaxConnectionTime) == false) || (exchange.Response() != _T("OK"))) {
 
@@ -1635,12 +1621,14 @@ namespace WPASupplicant {
                 bool retrigger(index == _requests.begin());
                 (*index)->Processing(false);
                 _requests.erase(index);
+                _adminLock.Unlock();
 
                 if (retrigger == true) {
                     const_cast<Controller*>(this)->Trigger();
                 }
+            } else {
+                _adminLock.Unlock();
             }
-            _adminLock.Unlock();
         }
 
         virtual void StateChange()
