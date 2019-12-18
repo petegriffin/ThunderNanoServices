@@ -17,7 +17,7 @@ using namespace std;
 #define SI_NTT_TABLE_ID  0xc3
 #define SI_SVCT_TABLE_ID 0xc4
 
-#define ELAPSED_TIME()  ((float_t)(Core::Time::Now().Ticks() - startTime) / 1000000)
+#define ELAPSED_TIME()  ((Core::Time::Now().Ticks() - startTime) / 1000)
 
 namespace WPEFramework {
 namespace Plugin {
@@ -70,13 +70,13 @@ void DsgParser::parse(unsigned char *pBuf, ssize_t len)
                   TRACE_L2("short NIT, got %d bytes (expected >7)", section_len);
                 } else if (1 == (pBuf[6] & 0xf)) {
                     if (!cdsDone) {
-                        TRACE_L1("[%3.3f] NIT : CDS", ELAPSED_TIME()); //1 CDS  Carrier Definition Subtable
+                        TRACE_L1("[%lld] NIT : CDS", ELAPSED_TIME()); //1 CDS  Carrier Definition Subtable
                         HexDump("NIT-CDS:", std::string((char *)pBuf, len));
                         cdsDone = parse_cds(pBuf, section_len, &cds);
                     }
                 } else if (2 == (pBuf[6] & 0xf)) {
                     if (!mmsDone) {
-                        TRACE_L1("[%3.3f] NIT : MMS", ELAPSED_TIME()); //2 MMS  Modulation Mode Subtable
+                        TRACE_L1("[%lld] NIT : MMS", ELAPSED_TIME()); //2 MMS  Modulation Mode Subtable
                         HexDump("NIT-MMS:", std::string((char *)pBuf, len));
                         mmsDone = parse_mms(pBuf, section_len, &mms);
                     }
@@ -110,7 +110,7 @@ void DsgParser::parse(unsigned char *pBuf, ssize_t len)
         TRACE_L2("cdsDone=%d mmsDone=%d nitDone=%d nttDone=%d svctDone=%d", cdsDone, mmsDone, nitDone, nttDone, svctDone);
         if (allDone) {
             // XXX: Notify
-            TRACE_L1("[%3.3f]  All Done, Generating channel map", ELAPSED_TIME());
+            TRACE_L1("[%lld]  All Done, Generating channel map", ELAPSED_TIME());
             channels = output_txt(&cds, &mms, &ntt, vcm_list);
 
             // dealloc memory
@@ -274,7 +274,7 @@ bool DsgParser::parse_ntt(unsigned char *buf, int len, struct ntt_table *ntt)
         return false;
     }
 
-    TRACE_L1("[%3.3f] NTT", ELAPSED_TIME());
+    TRACE_L1("[%lld] NTT", ELAPSED_TIME());
 
     // begin SNS
     n=8;
@@ -357,7 +357,7 @@ bool DsgParser::parse_svct(unsigned char *buf, int len, struct vcm **vcmlist, in
     vctid = (buf[n] << 8) | buf[n+1];
     n+=2;
 
-    TRACE(Trace::Information, ("[%3.3f] VCT_ID Received from Stream : %d from Application : %d (table_subtype=%d)",
+    TRACE(Trace::Information, ("[%lld] VCT_ID Received from Stream : %d from Application : %d (table_subtype=%d)",
         ELAPSED_TIME(), vctid, vctidfilter, table_subtype));
 
     if (table_subtype > 2)
@@ -384,7 +384,7 @@ bool DsgParser::parse_svct(unsigned char *buf, int len, struct vcm **vcmlist, in
         return false;
     }
 
-    TRACE_L1("[%3.3f] SVCT", ELAPSED_TIME());
+    TRACE_L1("[%lld] SVCT", ELAPSED_TIME());
     // walk the list for matching vctid
     while (vcm && vcm->vctid != vctid) {
         vcm = vcm->next;
