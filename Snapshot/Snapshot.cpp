@@ -24,6 +24,29 @@ namespace Plugin {
         {
         }
 
+        bool ReadImage(Core::JSON::ArrayType<Core::JSON::DecUInt8>& Image, const string& fileName)
+        {
+            bool result = false;
+
+            Core::File file(fileName, true);
+            if ((file.Exists()) && (file.Size() != 0)) {
+                if (file.Open(true) == true) {
+                    uint8_t* buffer = new uint8_t[file.Size()];
+                    uint32_t readBytes = file.Read(buffer, file.Size());
+
+                    if (readBytes == file.Size()) {
+                        result = true;
+                        for (uint32_t i =0; i < readBytes; ++i) {
+                            Image.Add(buffer[i]); //Need to relook the response type to be used for whole image
+                        }
+                    }
+
+                    delete[] buffer;
+                    file.Close();
+                }
+            }
+            return result;
+        }
         virtual bool R8_G8_B8_A8(const unsigned char* buffer, const unsigned int width, const unsigned int height)
         {
 
@@ -265,6 +288,26 @@ namespace Plugin {
         }
 
         return (response);
+    }
+
+    uint32_t Snapshot::CapturedData(JsonData::Snapshot::CaptureResultData& response)
+    {
+        uint32_t status = Core::ERROR_NONE;
+        StoreImpl file(_inProgress, _fileName);
+        if (file.IsValid() == true) {
+
+            if (_device->Capture(file)) {
+                response.Device = string(_device->Name());
+                if (file.ReadImage(response.Image, _fileName) != true) {
+                    status = Core::ERROR_UNAVAILABLE;
+                }
+            } else {
+                status = Core::ERROR_UNAVAILABLE;
+            }
+        } else {
+            status = Core::ERROR_INPROGRESS;
+        }
+        return status;
     }
 }
 }
