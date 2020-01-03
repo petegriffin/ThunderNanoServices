@@ -5,7 +5,7 @@
 namespace WPEFramework {
 namespace Exchange {
 
-    class RemoteHostExampleImpl : public RPC::RemoteLinker, IRemoteHostExample {
+    class RemoteHostExampleImpl : public RPC::RemoteLinker, public IRemoteHostExample {
     public: 
         class TimeWorker : public Core::IDispatch {
         public:
@@ -22,6 +22,12 @@ namespace Exchange {
                     if ((*subscriber)->TimeUpdate(Core::Time::Now().ToISO8601()) != Core::ERROR_NONE) {
                         (*subscriber)->Release();
                         subscriber = _parent->_subscribers.erase(subscriber);
+
+                        // close connection
+                        auto linker = (RPC::IRemoteLinker*)_parent->QueryInterface(RPC::IRemoteLinker::ID);
+                        if (linker != nullptr) {
+                            linker->Unlink();
+                        }
                     }
                 }
                 _parent->_adminLock.Unlock();
@@ -64,7 +70,8 @@ namespace Exchange {
         Core::CriticalSection _adminLock;
     };
 
-    uint32_t RemoteHostExampleImpl::Initialize(PluginHost::IShell* service) {
+    uint32_t RemoteHostExampleImpl::Initialize(PluginHost::IShell* service) 
+    {
         Plugin::RemoteHostExample::Config config;
         config.FromString(service->ConfigLine());
         
@@ -75,8 +82,8 @@ namespace Exchange {
         return Core::ERROR_NONE;
     }
 
-
-    uint32_t RemoteHostExampleImpl::Greet(const string& message, string& response) {
+    uint32_t RemoteHostExampleImpl::Greet(const string& message, string& response) 
+    {
 
         printf("#######################################\n");
         printf("%s\n", message.c_str());
@@ -106,8 +113,6 @@ namespace Exchange {
 
         return Core::ERROR_NONE;
     }
-
-
 
     SERVICE_REGISTRATION(RemoteHostExampleImpl, 1, 0);
 }

@@ -24,10 +24,10 @@ namespace Plugin {
         if (_implementation != nullptr) {
 
             if (service->RemoteConnection(connectionId)->ConnectionType() == RPC::IRemoteConnection::Type::Local) {
+
                 // code run only on plugin host
                 _implementation->Initialize(service);
             } else {
-                printf("Local code!");
                 // code run only on proxy side
                 if (_implementation->SubscribeTimeUpdates(this) != Core::ERROR_NONE) {
                     errorMessage = "Failed to subscribe updates";
@@ -44,7 +44,16 @@ namespace Plugin {
     void RemoteHostExample::Deinitialize(PluginHost::IShell* service) 
     {
         if (_implementation != nullptr) {
+            _implementation->UnsubscribeTimeUpdates(this);
+
+            // Close remote connection
+            auto linker = _implementation->QueryInterface<RPC::RemoteLinker>();
+            if (linker != nullptr) {
+                linker->Unlink();
+            }
+
             _implementation->Release();
+
             _implementation = nullptr;
         }
     }
@@ -56,7 +65,7 @@ namespace Plugin {
 
     uint32_t RemoteHostExample::TimeUpdate(string time) 
     {
-        TRACE_L1("#### Current time is: %s\n ####", time.c_str());
+        TRACE_L1("#### Current time is: %s ####", time.c_str());
 
         return Core::ERROR_NONE;
     }
