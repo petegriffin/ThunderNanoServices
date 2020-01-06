@@ -3,12 +3,14 @@
 
 #include <bcm_host.h>
 #include <fstream>
+#include <linux/fb.h>
 
 namespace WPEFramework {
 namespace Plugin {
 
 class DisplayInfoImplementation : public Exchange::IDeviceProperties, public Exchange::IGraphicsProperties, public Exchange::IConnectionProperties, public Core::Thread {
     static constexpr const TCHAR* CPUInfoFile= _T("/proc/cpuinfo");
+    static constexpr const TCHAR* FrameBufferDevice= _T("/dev/fb0");
 public:
     DisplayInfoImplementation()
         : _width(0)
@@ -94,6 +96,46 @@ public:
         return (Core::ERROR_NONE);
     }
 
+    bool AudioPassthrough(bool enable)
+    {
+        bool status = false;
+
+        TV_DISPLAY_STATE_T tvState;
+        if (vc_tv_get_display_state(&tvState) == 0) {
+
+            if (tvState.state & VC_HDMI_ATTACHED) {
+                HDMI_MODE_T drive = HDMI_MODE_DVI;
+                if (enable == true) {
+                    drive = HDMI_MODE_HDMI;
+                }
+
+                if (vc_tv_power_off() ==0) {
+
+                    if (vc_tv_hdmi_power_on_explicit(drive, static_cast<HDMI_RES_GROUP_T>(tvState.display.hdmi.group), tvState.display.hdmi.mode) == 0) {
+                        // Refresh framebuffer to get the hdmi change
+                        int fileHandle = open(FrameBufferDevice, O_RDONLY);
+                        if (fileHandle > 0) {
+
+                            struct fb_var_screeninfo screenInfo;
+                            if (ioctl(fileHandle, FBIOGET_VSCREENINFO, &screenInfo) == 0) {
+                                uint32_t currentBitsPerPixel = screenInfo.bits_per_pixel;
+                                screenInfo.bits_per_pixel = 8; //Just reset it to lower value;
+                                if (ioctl(fileHandle, FBIOPUT_VSCREENINFO, &screenInfo) == 0) {
+                                    // Restore pixel state to original
+                                    screenInfo.bits_per_pixel = currentBitsPerPixel;
+                                    if (ioctl(fileHandle, FBIOPUT_VSCREENINFO, &screenInfo) == 0) {
+                                        status = true;
+                                    }
+                                }
+                            }
+                            close(fileHandle);
+                        }
+                    }
+                }
+            }
+        }
+        return status;
+    }
     bool IsAudioPassthrough () const override
     {
         return _audioPassthrough;
