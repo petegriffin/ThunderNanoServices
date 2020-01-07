@@ -29,6 +29,16 @@ if (PLUGIN_COMPOSITOR_NXSERVER)
             PRIVATE
                 V3D_DRM_DISABLE=1)
     endif ()
+else ()
+    find_package(BCM_HOST QUIET)
+    if (BCM_HOST_FOUND)
+        target_link_libraries(${TARGET}
+            PRIVATE
+                BCM_HOST::BCM_HOST)
+        target_compile_definitions(${TARGET}
+            PRIVATE
+            ENABLE_BCMHOST=1)
+    endif ()
 endif ()
 
 if(EGL_FOUND)

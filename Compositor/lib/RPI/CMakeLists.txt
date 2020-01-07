@@ -5,7 +5,7 @@ message("Setting up ${TARGET} for RPI platfrom")
 find_package(${NAMESPACE}Core REQUIRED)
 find_package(${NAMESPACE}Plugins REQUIRED)
 find_package(${NAMESPACE}Definitions REQUIRED)
-find_package(BCM_HOST QUIET)
+find_package(BCM_HOST REQUIRED)
 
 add_library(${TARGET}
         RPI.cpp)

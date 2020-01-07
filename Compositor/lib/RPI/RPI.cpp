@@ -3,7 +3,6 @@
 #include <interfaces/IComposition.h>
 #include <bcm_host.h>
 #include <linux/fb.h>
-#include <errno.h>
 
 MODULE_NAME_DECLARATION(BUILD_REFERENCE)
 
@@ -444,6 +443,7 @@ namespace Plugin {
         {
             return const_cast<ClientData*>(static_cast<const CompositorImplementation&>(*this).FindClientData(name));
         }
+
         inline void ConfigureDisplay(Config& config)
         {
             if (config.AudioPassthrough.IsSet()) {
