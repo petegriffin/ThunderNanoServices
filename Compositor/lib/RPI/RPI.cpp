@@ -1,6 +1,9 @@
 #include "Module.h"
 
 #include <interfaces/IComposition.h>
+#include <bcm_host.h>
+#include <linux/fb.h>
+#include <errno.h>
 
 MODULE_NAME_DECLARATION(BUILD_REFERENCE)
 
@@ -8,6 +11,9 @@ namespace WPEFramework {
 namespace Plugin {
 
     class CompositorImplementation : public Exchange::IComposition {
+    private:
+        static constexpr const TCHAR* FrameBufferDevice= _T("/dev/fb0");
+
     private:
         CompositorImplementation(const CompositorImplementation&) = delete;
         CompositorImplementation& operator=(const CompositorImplementation&) = delete;
@@ -95,8 +101,10 @@ namespace Plugin {
             Config()
                 : Core::JSON::Container()
                 , Connector(_T("/tmp/compositor"))
+                , AudioPassthrough(true)
             {
                 Add(_T("connector"), &Connector);
+                Add(_T("audiopassthrough"), &AudioPassthrough);
             }
 
             ~Config()
@@ -105,6 +113,7 @@ namespace Plugin {
 
         public:
             Core::JSON::String Connector;
+            Core::JSON::Boolean AudioPassthrough;
         };
 
         struct ClientData {
@@ -149,6 +158,7 @@ namespace Plugin {
             if (_externalAccess->IsListening() == true) {
                 PlatformReady();
                 
+                ConfigureDisplay(config);
             } else {
                 delete _externalAccess;
                 _externalAccess = nullptr;
@@ -433,6 +443,63 @@ namespace Plugin {
         ClientData* FindClientData(const string& name)
         {
             return const_cast<ClientData*>(static_cast<const CompositorImplementation&>(*this).FindClientData(name));
+        }
+        inline void ConfigureDisplay(Config& config)
+        {
+            if (config.AudioPassthrough.IsSet()) {
+                if (AudioPassthrough(config.AudioPassthrough.Value()) != true) {
+                    TRACE_L1(_T("Audio passthrough configuration is failed"));
+                }
+            }
+        }
+
+        // Calling this function requires a restart of the Compositor and client, so either reboot or restart WPEFramework
+        // after updating the audipassthrough option in the Compositor.json
+        bool AudioPassthrough(bool enable)
+        {
+            bool status = false;
+
+            bcm_host_init();
+            TV_DISPLAY_STATE_T tvState;
+            if (vc_tv_get_display_state(&tvState) == 0) {
+
+                if (tvState.state & VC_HDMI_ATTACHED) {
+                    if (((tvState.state & VC_HDMI_HDMI) && (enable == false)) || ((tvState.state & VC_HDMI_DVI) && (enable == true))) {
+                        HDMI_MODE_T drive = HDMI_MODE_DVI;
+                        if (enable == true) {
+                            drive = HDMI_MODE_HDMI;
+                        }
+                        if (vc_tv_power_off() == 0) {
+
+                            if (vc_tv_hdmi_power_on_explicit(drive, static_cast<HDMI_RES_GROUP_T>(tvState.display.hdmi.group), tvState.display.hdmi.mode) == 0) {
+                                // Refresh framebuffer to get the hdmi change
+                                int fileHandle = open(FrameBufferDevice, O_RDONLY);
+                                if (fileHandle > 0) {
+
+                                    struct fb_var_screeninfo screenInfo;
+                                    if (ioctl(fileHandle, FBIOGET_VSCREENINFO, &screenInfo) == 0) {
+                                        uint32_t currentBitsPerPixel = screenInfo.bits_per_pixel;
+                                        screenInfo.bits_per_pixel = 8; //Just reset it to lower value;
+                                        if (ioctl(fileHandle, FBIOPUT_VSCREENINFO, &screenInfo) == 0) {
+                                            // Restore pixel state to original
+                                            screenInfo.bits_per_pixel = currentBitsPerPixel;
+                                            if (ioctl(fileHandle, FBIOPUT_VSCREENINFO, &screenInfo) == 0) {
+                                                status = true;
+                                            }
+                                        }
+                                    }
+                                    close(fileHandle);
+                                }
+                            }
+                        }
+                    } else {
+                        TRACE_L1(_T("AUDIO Passthrough is already in the requested state"));
+                    }
+                }
+            }
+            bcm_host_deinit();
+
+            return status;
         }
 
         mutable Core::CriticalSection _adminLock;
