@@ -27,6 +27,7 @@ namespace Exchange {
                         auto linker = (RPC::IRemoteLinker*)_parent->QueryInterface(RPC::IRemoteLinker::ID);
                         if (linker != nullptr) {
                             linker->Unlink();
+                            linker->Release();
                         }
                     }
                 }

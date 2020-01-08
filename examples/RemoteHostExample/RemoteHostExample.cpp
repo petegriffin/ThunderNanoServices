@@ -50,10 +50,10 @@ namespace Plugin {
             auto linker = _implementation->QueryInterface<RPC::RemoteLinker>();
             if (linker != nullptr) {
                 linker->Unlink();
+                linker->Release();
             }
 
             _implementation->Release();
-
             _implementation = nullptr;
         }
     }
