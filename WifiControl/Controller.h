@@ -733,6 +733,36 @@ namespace WPASupplicant {
             uint32_t _result;
         };
 
+        class ScanTimer {
+        public:
+            ScanTimer(Controller& parent)
+                : _parent(&parent)
+            {
+            }
+            ScanTimer(const ScanTimer& copy)
+                : _parent(copy._parent)
+            {
+            }
+            ~ScanTimer()
+            {
+            }
+
+            ScanTimer& operator=(const ScanTimer& RHS)
+            {
+                _parent = RHS._parent;
+                return (*this);
+            }
+
+            uint64_t Timed(const uint64_t scheduledTime)
+            {
+                ASSERT(_parent != nullptr);
+                return (_parent->Timed(scheduledTime));
+            }
+
+        private:
+            Controller* _parent;
+            uint64_t _interval;
+        };
         typedef std::map<const uint64_t, NetworkInfo> NetworkInfoContainer;
         typedef std::map<const string, ConfigInfo> EnabledContainer;
         typedef Core::StreamType<Core::SocketDatagram> BaseClass;
@@ -750,6 +780,7 @@ namespace WPASupplicant {
             , _detailRequest(*this)
             , _networkRequest(*this)
             , _statusRequest(*this)
+            , _scanTimer(Core::Thread::DefaultStackSize(), _T("ScanTimer"))
         {
             string remoteName(Core::Directory::Normalize(supplicantBase) + interfaceName);
 
@@ -1291,6 +1322,8 @@ namespace WPASupplicant {
             return (result);
         }
 
+        void ScheduleScan(uint32_t scanInterval);
+
     private:
         friend class Network;
         friend class Config;
@@ -1669,6 +1702,8 @@ namespace WPASupplicant {
             }
         }
 
+        uint64_t Timed(const uint64_t scheduledTime);
+
     private:
         mutable Core::CriticalSection _adminLock;
         mutable std::list<Request*> _requests;
@@ -1680,6 +1715,8 @@ namespace WPASupplicant {
         DetailRequest _detailRequest;
         NetworkRequest _networkRequest;
         StatusRequest _statusRequest;
+        Core::TimerType<ScanTimer> _scanTimer;
+        uint32_t _scanInterval;
     };
 }
 } // namespace WPEFramework::WPASupplicant

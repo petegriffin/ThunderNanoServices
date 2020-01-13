@@ -301,37 +301,6 @@ namespace Plugin {
             Core::JSON::ArrayType<JsonData::WifiControl::ConfigInfo> Configs;
         };
 
-        class ScanTimer {
-        public:
-            ScanTimer(WifiControl& parent)
-                : _parent(&parent)
-            {
-            }
-            ScanTimer(const ScanTimer& copy)
-                : _parent(copy._parent)
-            {
-            }
-            ~ScanTimer()
-            {
-            }
-
-            ScanTimer& operator=(const ScanTimer& RHS)
-            {
-                _parent = RHS._parent;
-                return (*this);
-            }
-
-            uint64_t Timed(const uint64_t scheduledTime)
-            {
-                ASSERT(_parent != nullptr);
-                return (_parent->Timed(scheduledTime));
-            }
-
-        private:
-            WifiControl* _parent;
-            uint64_t _interval;
-        };
-
     private:
         WifiControl(const WifiControl&) = delete;
         WifiControl& operator=(const WifiControl&) = delete;
@@ -377,8 +346,6 @@ namespace Plugin {
         Sink _sink;
         WifiDriver _wpaSupplicant;
         Core::ProxyType<WPASupplicant::Controller> _controller;
-        Core::TimerType<ScanTimer> _scanTimer;
-        uint64_t _scanInterval;
         void RegisterAll();
         void UnregisterAll();
         uint32_t endpoint_delete(const JsonData::WifiControl::DeleteParamsInfo& params);
@@ -395,8 +362,6 @@ namespace Plugin {
         void event_scanresults(const Core::JSON::ArrayType<JsonData::WifiControl::NetworkInfo>& list);
         void event_networkchange();
         void event_connectionchange(const string& ssid);
-        uint64_t Timed(const uint64_t scheduledTime);
-        void ScheduleScan();
     };
 
 } // namespace Plugin

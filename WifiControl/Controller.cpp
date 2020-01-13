@@ -209,7 +209,7 @@ namespace WPASupplicant {
                 } else if ((event == CTRL_EVENT_SCAN_RESULTS)) {
                     _adminLock.Lock();
                     if (_scanRequest.Set() == true) {
-                        _scanRequest.Event(event.Value());
+                        //_scanRequest.Event(event.Value());
                         _adminLock.Unlock();
                         Submit(&_scanRequest);
                     } else {
@@ -372,6 +372,28 @@ namespace WPASupplicant {
             }
         } else {
             _callback->Dispatch(CTRL_EVENT_NETWORK_CHANGED);
+        }
+    }
+
+    uint64_t Controller::Timed(const uint64_t scheduledTime)
+    {
+        uint32_t rc = Scan();
+        TRACE(Trace::Error, ("%s: Scan returned %d", __FUNCTION__, rc));
+        ScheduleScan(_scanInterval);
+        return 0;
+    }
+
+    void Controller::ScheduleScan(uint32_t scanInterval)
+    {
+        _scanInterval = scanInterval;
+
+        if (_scanTimer.Pending()) {
+            TRACE(Trace::Information, ("%s: Ignoring, timer is pending (%d)\n", __FUNCTION__, _scanTimer.Pending()));
+        } else {
+            TRACE(Trace::Information,("%s: Scheudling next scan in %lu ms\n", __FUNCTION__, _scanInterval));
+            Core::Time NextTick = Core::Time::Now();
+            NextTick.Add(scanInterval);
+            _scanTimer.Schedule(NextTick.Ticks(), ScanTimer(*this));
         }
     }
 }
