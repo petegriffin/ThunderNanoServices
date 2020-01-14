@@ -330,7 +330,7 @@ namespace WPASupplicant {
                     uint32_t marker = data.ForwardFind('\n');
                     uint32_t markerEnd = data.ForwardFind('\n', marker + 1);
 
-                    _parent.Clear();
+//                    _parent.Clear();
 
                     while (marker != markerEnd) {
 
