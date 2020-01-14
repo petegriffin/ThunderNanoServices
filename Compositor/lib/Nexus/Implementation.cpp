@@ -305,7 +305,15 @@ namespace Plugin {
 
         /* virtual */ uint32_t ToTop(const string& callsign) override
         {
-            return (Core::ERROR_GENERAL);
+            uint32_t error = Core::ERROR_NONE;
+            Exchange::IComposition::IClient* client = Client(callsign);
+            if (client != nullptr) {
+                client->ChangedZOrder(0);
+                client->Release();
+            } else {
+                error = Core::ERROR_FIRST_RESOURCE_NOT_FOUND;
+            }
+            return error;
         }
 
         /* virtual */ uint32_t PutBelow(const string& callsignRelativeTo, const string& callsignToReorder) override

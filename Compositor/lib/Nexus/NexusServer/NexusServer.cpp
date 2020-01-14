@@ -67,6 +67,7 @@ namespace Broadcom {
         ASSERT(_client != nullptr);
 
         if (zorder == 0) {
+
             /* the definition of "focus" is variable. this is one impl. */
             NxClient_ConnectList list;
             struct nxclient_status status;
@@ -75,6 +76,11 @@ namespace Broadcom {
             NxClient_P_Config_GetConnectList(_client, status.handle, &list);
 
             /* only refresh first connect */
+            if (list.connectId[0]) {
+                NxClient_P_RefreshConnect(_client, list.connectId[0]);
+            }
+            nxserver_p_focus_input_client(_client);
+            nxserver_p_focus_surface_client(_client);
         }
     }
 
