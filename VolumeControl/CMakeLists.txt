@@ -32,12 +32,14 @@ if (NXCLIENT_FOUND AND NEXUS_FOUND)
         PRIVATE
             Nexus/VolumeControlPlatform.cpp)
 elseif (BCM_HOST_FOUND)
+    find_package(ALSA REQUIRED)
     target_link_libraries(${MODULE_NAME}
         PRIVATE
-            BCM_HOST::BCM_HOST)
+            BCM_HOST::BCM_HOST
+            ${ALSA_LIBRARIES})
     target_sources(${MODULE_NAME}
         PRIVATE
-            Stub/VolumeControlPlatform.cpp)
+            RPI/VolumeControlPlatform.cpp)
 else ()
     message("Using STUB Volume control platform")
     target_sources(${MODULE_NAME}
